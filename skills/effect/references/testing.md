@@ -4,7 +4,7 @@ Read this when you write tests with `@effect/vitest`, or test time, retry, sched
 
 ## Setup
 
-Install `vitest` and `@effect/vitest` at the same version as `effect`. Run tests with `vitest run`, not `bun test`.
+Install `@effect/vitest` at the same version as `effect`. Install `vitest` 5, the range `@effect/vitest` accepts as a peer (`>=5.0.0 <6.0.0`). Run tests with `vitest run`, not `bun test`.
 
 ```ts
 import { describe, expect, it } from "@effect/vitest"

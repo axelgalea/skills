@@ -41,7 +41,7 @@ Terminators:
 | --- | --- |
 | `.orNull()` | handled output, or `null` for unhandled cases |
 | `.orElse(() => fallback)` | handled output, or the fallback |
-| `.render()` | handled output; `null` only if `Initial`/`Success` is unhandled |
+| `.render()` | handled output; `null` for an unhandled `Initial` or `Success`; throws `Cause.squash(cause)` for an unhandled `Failure`, so an error boundary catches it |
 | `.exhaustive()` | handled output; only exists once every case is handled |
 
 Handler order matters for overlapping handlers: the first matching handler wins.

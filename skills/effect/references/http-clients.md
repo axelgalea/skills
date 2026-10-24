@@ -32,7 +32,7 @@ export const layer = (token: Redacted.Redacted) =>
         HttpClient.mapRequest(HttpClientRequest.bearerToken(Redacted.value(token))),
         HttpClient.mapRequest(HttpClientRequest.acceptJson),
         HttpClient.filterStatusOk,
-        HttpClient.retryTransient({ times: 3 }),
+        HttpClient.retryTransient({ schedule: Schedule.exponential("200 millis"), times: 3 }),
       )
 
       const getRepo = Effect.fn("GitHub.getRepo")(
@@ -60,7 +60,10 @@ Keep network calls out of business services and database transactions.
 
 ## Retry and rate limits
 
-`HttpClient.retryTransient(...)` retries transport errors, timeouts, and the statuses `408`, `429`, `500`, `502`, `503`, and `504`. It waits at least as long as a `Retry-After` header asks. Put it after `filterStatusOk` so status failures reach it as errors.
+`HttpClient.retryTransient(...)` retries transport errors, timeouts, and the statuses `408`, `429`, `500`, `502`, `503`, and `504`. It waits at least as long as a `Retry-After` header asks.
+
+- Pass a `schedule`. The default is `Schedule.forever`, which has no delay, so `retryTransient({ times: 3 })` sends 4 requests back to back unless the server sends `Retry-After`.
+- The default `retryOn: "errors-and-responses"` retries transient status codes with or without `filterStatusOk`, in either order. Keep `filterStatusOk` so the last non-2xx response fails instead of reaching the decoder.
 
 `HttpClient.withRateLimiter(...)` paces requests and learns from rate-limit and `Retry-After` headers. It needs a `RateLimiter` plus an initial window, limit, and key. It adds `RateLimiterError` to the error channel and retries `429` with no limit by default. Set `times` to bound those retries, or `0` to turn them off.
 

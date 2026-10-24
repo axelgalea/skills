@@ -2,7 +2,7 @@
 
 Read this when you write React code with Effect atoms: `Atom.make`, `Atom.runtime`, `runtime.atom`, `runtime.fn`, `Atom.family`, `Atom.pull`, `AsyncResult`, and the `@effect/atom-react` hooks.
 
-Atoms live in core Effect (`effect/reactivity`). React bindings live in `@effect/atom-react`, which releases with the same version number as `effect`. React 19 is a peer dependency.
+Atoms live in core Effect (`effect/reactivity`). React bindings live in `@effect/atom-react`, which releases with the same version number as `effect`. Its peer dependencies are React 19 and `scheduler`.
 
 ```ts
 import { AsyncResult, Atom } from "effect/reactivity"
@@ -116,7 +116,7 @@ export const userAtom = Atom.family((id: string) =>
 const result = useAtomValue(userAtom(id))
 ```
 
-Use string or number keys. Families memoize by `Equal` and `Hash`, so a fresh object literal misses the cache unless it implements `Equal`.
+Families memoize by `Equal` and `Hash`. In v4 these compare primitives, plain objects, arrays, maps, sets, and dates by content, so `userAtom({ id })` returns the same atom for the same `id` even when the object literal is new. Do not mutate a key after passing it. `Hash` caches the hash per object, so a mutated key misses the cache.
 
 ## Mutations with `runtime.fn`
 
