@@ -1,8 +1,9 @@
-# Complete examples
+# Atom + React examples
 
-Every block below is a standalone module. All of them typecheck together under
-`strict` + `exactOptionalPropertyTypes` against `effect@4.0.6` and
-`@effect/atom-react@4.0.6`. The examples use
+Every block below is a standalone module. All of them typecheck together against
+`effect@4.0.6` and `@effect/atom-react@4.0.6` under `strict` and
+`exactOptionalPropertyTypes`, and pass `@effect/tsgo` with the settings in
+[project-setup.md](project-setup.md). The examples use
 `https://jsonplaceholder.typicode.com` as a stand-in API.
 
 ## 1. Minimal fetch atom (no services)
@@ -13,7 +14,7 @@ import { Cause, Effect, Schema } from "effect"
 import { AsyncResult, Atom } from "effect/reactivity"
 import { useAtomRefresh, useAtomValue } from "@effect/atom-react"
 
-const User = Schema.Struct({ id: Schema.Number, name: Schema.String })
+const User = Schema.Struct({ id: Schema.Finite, name: Schema.String })
 
 // Effect atoms surface as AsyncResult
 const usersAtom = Atom.make(
@@ -57,30 +58,41 @@ export function UsersList() {
 
 ## 2. Service, typed errors, and runtime
 
-Shared module used by the remaining examples. `requestJson` decodes the body
-with a schema, so the success type comes from the schema and a bad payload fails
-with `SchemaError`.
+The service module follows the module surface from
+[services-layers.md](services-layers.md). `requestJson` decodes the body with a
+schema, so the success type comes from the schema and a bad payload fails with
+`SchemaError`. `getAll` takes no arguments, so it is a plain Effect value named
+with `Effect.withSpan`.
 
 ```ts
 // users.ts
 import { Context, Effect, Layer, Schema } from "effect"
-import { Atom } from "effect/reactivity"
 
-export const User = Schema.Struct({ id: Schema.Number, name: Schema.String })
+export const User = Schema.Struct({ id: Schema.Finite, name: Schema.String })
 export interface User extends Schema.Schema.Type<typeof User> {}
 
-export class HttpError extends Schema.TaggedError<HttpError>()("HttpError", {
-  status: Schema.Number,
+export class HttpError extends Schema.TaggedError<HttpError>()("Users.HttpError", {
+  status: Schema.Finite,
 }) {}
 
 export class NetworkError extends Schema.TaggedError<NetworkError>()(
-  "NetworkError",
+  "Users.NetworkError",
   { cause: Schema.Defect() },
 ) {}
 
+type UsersError = HttpError | NetworkError | Schema.SchemaError
+
+export interface Interface {
+  readonly getAll: Effect.Effect<ReadonlyArray<User>, UsersError>
+  readonly findById: (id: string) => Effect.Effect<User, UsersError>
+  readonly create: (name: string) => Effect.Effect<User, UsersError>
+}
+
+export class Service extends Context.Service<Service, Interface>()("@app/Users") {}
+
 const BASE = "https://jsonplaceholder.typicode.com"
 
-// Decode the body with a schema instead of casting it
+// Shared by every method: maps network, status, and decode failures to typed errors
 const requestJson = <S extends Schema.Top>(
   schema: S,
   path: string,
@@ -103,31 +115,49 @@ const requestJson = <S extends Schema.Top>(
     Effect.flatMap(Schema.decodeUnknownEffect(schema)),
   )
 
-export class Users extends Context.Service<Users>()("app/Users", {
-  make: Effect.gen(function* () {
-    const getAll = requestJson(Schema.Array(User), "/users")
-    const findById = (id: string) => requestJson(User, `/users/${id}`)
-    const create = (name: string) =>
-      requestJson(User, "/users", {
+export const layer = Layer.effect(
+  Service,
+  Effect.gen(function* () {
+    // A zero-argument operation is a plain Effect value, named with a span
+    const getAll = requestJson(Schema.Array(User), "/users").pipe(
+      Effect.withSpan("Users.getAll"),
+    )
+
+    const findById = Effect.fn("Users.findById")(function* (id: string) {
+      return yield* requestJson(User, `/users/${id}`)
+    })
+
+    const create = Effect.fn("Users.create")(function* (name: string) {
+      return yield* requestJson(User, "/users", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name }),
       })
-    return { getAll, findById, create } as const
-  }),
-}) {
-  // v4 does not auto-generate a layer, so define it yourself
-  static readonly layer = Layer.effect(this, this.make)
-}
+    })
 
-// AtomRuntime from a Layer: provides Users to runtime.atom / .fn / .pull
+    return Service.of({ getAll, findById, create })
+  }),
+)
+
+export * as Users from "./users"
+```
+
+The atoms live in their own module and reach the service through its namespace.
+
+```ts
+// user-atoms.ts
+import { Effect } from "effect"
+import { Atom } from "effect/reactivity"
+import { Users } from "./users"
+
+// AtomRuntime from a Layer: provides Users.Service to runtime.atom / .fn / .pull
 export const runtime = Atom.runtime(Users.layer)
 
 // Query, tagged so mutations with reactivityKeys ["users"] refresh it
 export const usersAtom = runtime
   .atom(
     Effect.gen(function* () {
-      const users = yield* Users
+      const users = yield* Users.Service
       return yield* users.getAll
     }),
   )
@@ -137,7 +167,7 @@ export const usersAtom = runtime
 export const userAtom = Atom.family((id: string) =>
   runtime.atom(
     Effect.gen(function* () {
-      const users = yield* Users
+      const users = yield* Users.Service
       return yield* users.findById(id)
     }),
   ),
@@ -146,7 +176,7 @@ export const userAtom = Atom.family((id: string) =>
 // Mutation: invalidates everything tagged "users" when it completes
 export const createUserAtom = runtime.fn(
   Effect.fnUntraced(function* (name: string) {
-    const users = yield* Users
+    const users = yield* Users.Service
     return yield* users.create(name)
   }),
   { reactivityKeys: ["users"] },
@@ -159,7 +189,7 @@ export const createUserAtom = runtime.fn(
 // UsersList.tsx
 import { AsyncResult } from "effect/reactivity"
 import { useAtomRefresh, useAtomValue } from "@effect/atom-react"
-import { usersAtom } from "./users"
+import { usersAtom } from "./user-atoms"
 
 export function UsersList() {
   const result = useAtomValue(usersAtom)
@@ -172,8 +202,8 @@ export function UsersList() {
       </button>
       {AsyncResult.builder(result)
         .onInitial(() => <p>Loading…</p>)
-        .onErrorTag("HttpError", (e) => <p>Server returned {e.status}</p>)
-        .onErrorTag("NetworkError", () => <p>Network unavailable</p>)
+        .onErrorTag("Users.HttpError", (e) => <p>Server returned {e.status}</p>)
+        .onErrorTag("Users.NetworkError", () => <p>Network unavailable</p>)
         .onErrorTag("SchemaError", () => <p>Unexpected response shape</p>)
         .onDefect(() => <p>Unexpected error</p>)
         .onInterrupt(() => null)
@@ -205,7 +235,7 @@ guarantee.
 import { Cause } from "effect"
 import { AsyncResult } from "effect/reactivity"
 import { useAtomRefresh, useAtomValue } from "@effect/atom-react"
-import { userAtom } from "./users"
+import { userAtom } from "./user-atoms"
 
 export function UserProfile({ id }: { id: string }) {
   const result = useAtomValue(userAtom(id))
@@ -236,10 +266,10 @@ export function UserProfile({ id }: { id: string }) {
 // CreateUserButton.tsx
 import { Exit } from "effect"
 import { useAtomSet, useAtomValue } from "@effect/atom-react"
-import { createUserAtom } from "./users"
+import { createUserAtom } from "./user-atoms"
 
 export function CreateUserButton() {
-  // mode: "promiseExit" returns Promise<Exit<User, HttpError | NetworkError | SchemaError>>
+  // mode: "promiseExit" returns Promise<Exit<User, Users.HttpError | Users.NetworkError | SchemaError>>
   const createUser = useAtomSet(createUserAtom, { mode: "promiseExit" })
   // the fn atom's own AsyncResult tracks the latest call
   const status = useAtomValue(createUserAtom)
@@ -316,7 +346,7 @@ to keep only the latest chunk.
 // UsersSuspense.tsx
 import { Suspense } from "react"
 import { useAtomSuspense } from "@effect/atom-react"
-import { usersAtom } from "./users"
+import { usersAtom } from "./user-atoms"
 
 function UsersSuspenseList() {
   // suspends until Success; failures throw to the nearest error boundary

@@ -11,13 +11,13 @@ Agent skills, installable with [`npx skills`](https://github.com/vercel-labs/ski
 npx skills add axelgalea/skills
 
 # or install one directly
-npx skills add axelgalea/skills --skill effect-atom-react
+npx skills add axelgalea/skills --skill effect
 ```
 
 ## Skills
 
 | Skill | Description |
 | --- | --- |
-| [`effect-atom-react`](skills/effect-atom-react/SKILL.md) | Data fetching and async state in React with Effect v4 Atoms (`effect/reactivity`) and `@effect/atom-react`. |
+| [`effect`](skills/effect/SKILL.md) | Rules and patterns for the latest Effect v4 release: services, layers, schemas, errors, config, tests, HTTP, scheduling, streams, caching, and React state with Effect Atom. Adapted from Kit Langton's work, see [NOTICE](skills/effect/NOTICE.md). |
 
 Created in [T3 Code](https://t3.codes).

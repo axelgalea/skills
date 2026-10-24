@@ -10,7 +10,7 @@ Use the package manager the project already uses. The lockfile in the project ro
 - `@effect/vitest` for tests.
 - Effect Atom for state in web apps. Atoms come from `effect/reactivity` and React hooks come from `@effect/atom-react`. Do not use the v3 packages `@effect-atom/atom` or `@effect-atom/atom-react`. Do not add another state library such as Redux, Zustand, Jotai, or TanStack Query.
 
-Effect v4 changed many APIs from v3, and most examples online and in model training data are v3. Check the source in `repos/effect` before you use an API you are not sure about.
+Effect v4 changed many APIs from v3, and most examples online and in model training data are v3. Check the source in `repos/effect` before you use an API you are not sure about. For Effect code, use the `effect` skill.
 
 ## Library source in `repos/`
 
