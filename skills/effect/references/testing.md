@@ -2,6 +2,9 @@
 
 Read this when you write tests with `@effect/vitest`, or test time, retry, schedules, concurrency, workers, services, or config.
 
+For RPC handlers, HTTP serialization, or AtomRpc client substitution, also read
+[rpc-testing.md](rpc-testing.md). It uses the test conventions in this reference.
+
 ## Setup
 
 Install `@effect/vitest` at the same version as `effect`. Install `vitest` 5, the range `@effect/vitest` accepts as a peer (`>=5.0.0 <6.0.0`). Run tests with `vitest run`, not `bun test`.

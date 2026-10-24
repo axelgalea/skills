@@ -2,10 +2,10 @@
 
 Read this for handler, serialization, routing, or browser state tests.
 
-Use `@effect/vitest` at the runtime's Effect version and its supported Vitest
-version. Run tests from the package directory. Use `it.effect` for tests with
-Effect's test services. Use live services when the test depends on real network
-time. Provide stateful layers inside each test for a fresh acquisition.
+Read [testing.md](testing.md) for test services, fresh layers, deterministic
+synchronization, and configuration. This reference covers the RPC transport
+and AtomRpc test APIs. Examples use `@acme/domain` for shared contracts.
+Adapt the imports to the application.
 
 ## Handler behavior
 
@@ -103,9 +103,8 @@ In-memory RPC tests alone cannot catch encoding mistakes.
 
 ## Web atoms
 
-The server is an external dependency of the web package. Test the web's actual
-atoms with a controlled RPC implementation at that boundary. The web test must
-not import `apps/server`.
+Test the actual client atoms with a controlled RPC implementation at the
+server boundary. Keep handler behavior tests separate from these client tests.
 
 Build a test layer for the existing `ApiClient.Service` with
 `Layer.effect(ApiClient.Service, RpcTest.makeClient(AppRpcs, { flatten: true }))`.
@@ -138,10 +137,3 @@ that two atoms contain the same key string.
 
 For streams, test the items and declared failure. If the change affects stream
 lifetime, check cancellation or finalization with a deterministic signal.
-
-## Configuration
-
-Supply config with
-`ConfigProvider.layer(ConfigProvider.fromUnknown({ ... }))`. Do not mutate
-`process.env` or `globalThis`. Keep database data and test ports isolated by
-resource acquisition, not by a hard-coded port or shared file path.

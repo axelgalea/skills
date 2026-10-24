@@ -4,6 +4,10 @@ Read this when you write React code with Effect atoms: `Atom.make`, `Atom.runtim
 
 Atoms live in core Effect (`effect/reactivity`). React bindings live in `@effect/atom-react`, which releases with the same version number as `effect`. Its peer dependencies are React 19 and `scheduler`.
 
+For an Effect RPC client, read [rpc-atoms.md](rpc-atoms.md). It covers
+`AtomRpc.Service`, typed query and mutation invocations, and invalidation.
+Use this reference for the shared atom and React hook rules.
+
 ```ts
 import { AsyncResult, Atom } from "effect/reactivity"
 import {

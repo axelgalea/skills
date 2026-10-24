@@ -1,7 +1,11 @@
-# Contracts and server wiring
+# RPC contracts, middleware, and transport
 
 Read this for an RPC contract, middleware, handler, or transport change.
-Examples use the `@acme/domain` package name. Adapt it to the project.
+Examples import contracts from `@acme/domain`. In a single-package app, use
+local imports instead. The APIs do not require a monorepo.
+
+For browser query and mutation atoms, read [rpc-atoms.md](rpc-atoms.md). For
+RPC-specific test setup, read [rpc-testing.md](rpc-testing.md).
 
 ## Shared contracts
 
@@ -120,6 +124,12 @@ authenticated identity.
 This is the repository's public contract. Implement `layer` with the chosen
 storage. Decode rows there, and map infrastructure failures there.
 
+Use `SqlSchema` or a schema decoder at the SQL boundary. Account for the
+database's representation, such as SQLite integers for boolean columns.
+`SqliteClient.layer({ filename })` supplies both the SQLite and generic
+`SqlClient` services. A fresh `":memory:"` acquisition gives a test its own
+database. Run its migrations before testing queries.
+
 ```ts
 // apps/server/src/todos/todo-repo.ts, public contract
 import { Context, Effect, Schema } from "effect"
@@ -203,45 +213,6 @@ export const layer = RpcServer.layerHttp({
 }).pipe(Layer.provide(RpcSerialization.layerNdjson))
 
 export * as Rpc from "./rpc.ts"
-```
-
-```ts
-// apps/server/src/server.ts
-import { createServer } from "node:http"
-import { NodeHttpServer } from "@effect/platform-node"
-import { Config, Layer } from "effect"
-import { HttpRouter } from "effect/http"
-import { AuthMiddleware } from "./auth-middleware.ts"
-import { Db } from "./db.ts"
-import { Rpc } from "./rpc.ts"
-import { TodoRepo } from "./todos/todo-repo.ts"
-import { TodosHandlers } from "./todos/todos-handlers.ts"
-
-const HttpLive = NodeHttpServer.layerConfig(createServer, {
-  port: Config.Port("PORT").pipe(Config.withDefault(3000)),
-})
-const RepoLive = TodoRepo.layer.pipe(Layer.provide(Db.layer))
-const HandlersLive = TodosHandlers.layer.pipe(Layer.provide(RepoLive))
-const RoutesLive = Rpc.layer.pipe(
-  Layer.provide([HandlersLive, AuthMiddleware.layer]),
-)
-
-export const layer = HttpRouter.serve(RoutesLive).pipe(Layer.provide(HttpLive))
-
-export * as Server from "./server.ts"
-```
-
-`Db.layer`, `TodoRepo.layer`, and `AuthMiddleware.layer` are application
-implementations. Supply their dependencies when composing them. Do not fix
-missing services by merging unrelated layers.
-
-```ts
-// apps/server/src/main.ts
-import { NodeRuntime } from "@effect/platform-node"
-import { Layer } from "effect"
-import { Server } from "./server.ts"
-
-Layer.launch(Server.layer).pipe(NodeRuntime.runMain)
 ```
 
 ## Streams and transport choices

@@ -18,7 +18,11 @@ npx skills add axelgalea/skills --skill effect
 
 | Skill | Description |
 | --- | --- |
-| [`effect`](skills/effect/SKILL.md) | Rules and patterns for the latest Effect v4 release: services, layers, schemas, errors, config, tests, HTTP, scheduling, streams, caching, and React state with Effect Atom. Adapted from Kit Langton's work, see [NOTICE](skills/effect/NOTICE.md). |
-| [`effect-rpc-monorepo`](skills/effect-rpc-monorepo/SKILL.md) | Shared RPC contracts, server handlers and middleware, React queries and mutations with Effect Atom, and tests across a full-stack Effect v4 monorepo. |
+| [`effect`](skills/effect/SKILL.md) | Coding conventions and API patterns for Effect v4, including services, schemas, layers, RPC, tests, HTTP, and React state with Effect Atom. Adapted from Kit Langton's work, see [NOTICE](skills/effect/NOTICE.md). |
+| [`effect-project`](skills/effect-project/SKILL.md) | Project structure, package boundaries, feature folders, application wiring, and development workflow for CLI, server-only, and full-stack Effect projects. Invoke explicitly with `$effect-project`. Use with `effect`. |
+
+Install both skills to use the project conventions. `effect-project` reads the
+coding and API references in `effect`. Install `effect` alone if you only want
+the coding guidance.
 
 Created in [T3 Code](https://t3.codes).

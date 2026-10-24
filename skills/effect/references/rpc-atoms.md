@@ -1,4 +1,4 @@
-# Browser client and atoms
+# RPC client atoms
 
 Read this when wiring the browser client or changing a query, mutation, or
 component. The contracts in [rpc.md](rpc.md) define these procedure names.
@@ -23,9 +23,8 @@ export class Service extends AtomRpc.Service<Service>()("@acme/ApiClient", {
 export * as ApiClient from "./api-client.ts"
 ```
 
-Configure Vite to proxy `/rpc` to the server during development. The browser
-then uses one origin. Keep production routing consistent with that URL or
-configure the client URL for the deployment.
+This example uses a same-origin `/rpc` endpoint. Configure the URL for the
+application. Development proxy and production routing belong to project setup.
 
 `FetchHttpClient.layer` works in the browser without a platform-browser
 dependency. Do not call `fetch` separately for the same application data.
@@ -56,8 +55,8 @@ export const todoAtom = Atom.family((id: Todos.TodoId) =>
 export const createTodoAtom = ApiClient.Service.mutation("Todos.Create")
 ```
 
-Use stable family keys such as branded strings. Define atoms at module scope.
-Do not construct a new atom each render.
+Follow [atom-react.md](atom-react.md) for atom ownership, family keys, registry
+lifetime, and React hooks. This example adds the RPC invocation shapes.
 
 ```tsx
 // apps/web/src/todos/todo-list.tsx
@@ -100,10 +99,9 @@ invalidation, not a notification to other browsers. In Effect 4.0.6,
 `Reactivity.mutation` invalidates keys after success. A failed mutation does not
 invalidate them.
 
-Mount one `RegistryProvider` from `@effect/atom-react` around the application.
-Use the same registry for queries and mutations that share invalidation keys.
-Keep failures visible in the UI. Do not render raw infrastructure causes to the
-user.
+Queries and mutations that share invalidation keys must use the same registry.
+See [atom-react.md](atom-react.md#registry) for registry ownership. Render
+failures the user can act on rather than raw infrastructure causes.
 
 ## Streaming queries
 

@@ -1,6 +1,19 @@
 # Project setup
 
-Read this when you create an Effect project or change its `tsconfig`.
+Read this when you set up Effect dependencies, compiler diagnostics, or package
+compilation. The user can explicitly invoke `effect-project` for application
+layout and package ownership. Do not invoke it automatically.
+
+## Dependencies
+
+Verify the current stable release for a new project. Pin `effect` and its
+runtime and test `@effect/*` packages to the same release. Compiler tooling such
+as `@effect/tsgo` has its own version. Check peer dependencies before choosing
+React, Vitest, or platform package versions.
+
+Choose runtime adapters for the actual runtime. Node uses
+`@effect/platform-node`. React hooks use `@effect/atom-react`. SQLite on Node
+uses `@effect/sql-sqlite-node`. Install only what the application uses.
 
 ## Effect language service
 
@@ -79,3 +92,24 @@ Pick module settings by who compiles the code:
 - `NodeNext` requires file extensions in relative imports. Add `"rewriteRelativeImportExtensions": true` to write `.ts` in imports and emit `.js`.
 - Libraries add `"declaration": true` and `"declarationMap": true`. `declarationMap` fails without `declaration` or `composite`.
 - Monorepo packages add `"composite": true` and `"incremental": true`.
+
+## Package compilation
+
+Give each package its own config. Use project references when one compiler
+check should find stale contracts across packages. A project consumed through
+build references must emit the declarations its consumers need. A web config
+with `noEmit` can be checked separately if the solution's build graph does not
+accept it as a reference.
+
+For a runtime-independent domain package, omit DOM libraries and set
+`types: []` so ambient Node types do not admit `process` or other Node globals.
+Set the ECMAScript library according to the runtime target.
+
+Source-only internal packages can export `./src/index.ts` when the runtime and
+bundler support TypeScript sources. A published JavaScript library needs its
+own build and export configuration.
+
+Use `erasableSyntaxOnly` if Node runs `.ts` files by stripping types. Verify
+support in the actual Node version. TypeScript path aliases alone do not
+configure Node's runtime resolution. Use package exports for internal package
+imports that must work in both the runtime and the bundler.
