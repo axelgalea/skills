@@ -1,6 +1,6 @@
 # AsyncResult
 
-`import * as AsyncResult from "effect/unstable/reactivity/AsyncResult"`
+`import { AsyncResult } from "effect/reactivity"`
 
 Every Effect/Stream atom (`Atom.make(effect)`, `runtime.atom`, `runtime.fn`,
 `Atom.pull`) holds an `AsyncResult<A, E>`.
@@ -27,7 +27,7 @@ disappear from the API.
 | `onInitial((initial) => …)` | `Initial` |
 | `onInitialOrWaiting((result) => …)` | `Initial`, or any state with `waiting: true` |
 | `onWaiting((result) => …)` | any state with `waiting: true` (does not narrow) |
-| `onSuccess((value, success) => …)` | `Success` — second arg exposes `waiting`, `timestamp` |
+| `onSuccess((value, success) => …)` | `Success`. The second arg exposes `waiting`, `timestamp` |
 | `onFailure((cause, failure) => …)` | every `Failure` (typed errors, defects, interrupts) |
 | `onError((error, failure) => …)` | typed failures `E` |
 | `onErrorTag("Tag", (error, failure) => …)` | typed failures with `_tag === "Tag"`; also accepts an array of tags |

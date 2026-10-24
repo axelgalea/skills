@@ -1,33 +1,29 @@
 # Complete examples
 
-Every block below is a standalone module; all of them typecheck together under
-`strict` + `exactOptionalPropertyTypes` against `effect@4.0.0-rc.109` /
-`@effect/atom-react@4.0.0-rc.109`. The examples use
+Every block below is a standalone module. All of them typecheck together under
+`strict` + `exactOptionalPropertyTypes` against `effect@4.0.6` and
+`@effect/atom-react@4.0.6`. The examples use
 `https://jsonplaceholder.typicode.com` as a stand-in API.
 
 ## 1. Minimal fetch atom (no services)
 
 ```tsx
 // UsersListMinimal.tsx
-import { Cause, Effect } from "effect"
-import * as AsyncResult from "effect/unstable/reactivity/AsyncResult"
-import * as Atom from "effect/unstable/reactivity/Atom"
+import { Cause, Effect, Schema } from "effect"
+import { AsyncResult, Atom } from "effect/reactivity"
 import { useAtomRefresh, useAtomValue } from "@effect/atom-react"
 
-type User = { id: number; name: string }
+const User = Schema.Struct({ id: Schema.Number, name: Schema.String })
 
 // Effect atoms surface as AsyncResult
 const usersAtom = Atom.make(
-  Effect.tryPromise({
-    try: async (signal) => {
-      const res = await fetch("https://jsonplaceholder.typicode.com/users", {
-        signal,
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      return (await res.json()) as Array<User>
-    },
-    catch: (cause) => cause as Error,
-  }),
+  Effect.tryPromise(async (signal): Promise<unknown> => {
+    const res = await fetch("https://jsonplaceholder.typicode.com/users", {
+      signal,
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return res.json()
+  }).pipe(Effect.flatMap(Schema.decodeUnknownEffect(Schema.Array(User)))),
 )
 
 export function UsersList() {
@@ -61,26 +57,35 @@ export function UsersList() {
 
 ## 2. Service, typed errors, and runtime
 
-Shared module used by the remaining examples.
+Shared module used by the remaining examples. `requestJson` decodes the body
+with a schema, so the success type comes from the schema and a bad payload fails
+with `SchemaError`.
 
 ```ts
 // users.ts
-import { Context, Data, Effect, Layer } from "effect"
-import * as Atom from "effect/unstable/reactivity/Atom"
+import { Context, Effect, Layer, Schema } from "effect"
+import { Atom } from "effect/reactivity"
 
-export type User = { id: number; name: string }
+export const User = Schema.Struct({ id: Schema.Number, name: Schema.String })
+export interface User extends Schema.Schema.Type<typeof User> {}
 
-export class HttpError extends Data.TaggedError("HttpError")<{
-  readonly status: number
-}> {}
+export class HttpError extends Schema.TaggedError<HttpError>()("HttpError", {
+  status: Schema.Number,
+}) {}
 
-export class NetworkError extends Data.TaggedError("NetworkError")<{
-  readonly cause: unknown
-}> {}
+export class NetworkError extends Schema.TaggedError<NetworkError>()(
+  "NetworkError",
+  { cause: Schema.Defect() },
+) {}
 
 const BASE = "https://jsonplaceholder.typicode.com"
 
-const requestJson = <A>(path: string, init?: RequestInit) =>
+// Decode the body with a schema instead of casting it
+const requestJson = <S extends Schema.Top>(
+  schema: S,
+  path: string,
+  init?: RequestInit,
+) =>
   Effect.tryPromise({
     try: (signal) => fetch(`${BASE}${path}`, { ...init, signal }),
     catch: (cause) => new NetworkError({ cause }),
@@ -91,18 +96,19 @@ const requestJson = <A>(path: string, init?: RequestInit) =>
     ),
     Effect.flatMap((res) =>
       Effect.tryPromise({
-        try: () => res.json() as Promise<A>,
+        try: (): Promise<unknown> => res.json(),
         catch: (cause) => new NetworkError({ cause }),
       }),
     ),
+    Effect.flatMap(Schema.decodeUnknownEffect(schema)),
   )
 
 export class Users extends Context.Service<Users>()("app/Users", {
   make: Effect.gen(function* () {
-    const getAll = requestJson<Array<User>>("/users")
-    const findById = (id: string) => requestJson<User>(`/users/${id}`)
+    const getAll = requestJson(Schema.Array(User), "/users")
+    const findById = (id: string) => requestJson(User, `/users/${id}`)
     const create = (name: string) =>
-      requestJson<User>("/users", {
+      requestJson(User, "/users", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name }),
@@ -110,11 +116,11 @@ export class Users extends Context.Service<Users>()("app/Users", {
     return { getAll, findById, create } as const
   }),
 }) {
-  // v4 does not auto-generate a layer — define it yourself
+  // v4 does not auto-generate a layer, so define it yourself
   static readonly layer = Layer.effect(this, this.make)
 }
 
-// AtomRuntime from a Layer — provides Users to runtime.atom / .fn / .pull
+// AtomRuntime from a Layer: provides Users to runtime.atom / .fn / .pull
 export const runtime = Atom.runtime(Users.layer)
 
 // Query, tagged so mutations with reactivityKeys ["users"] refresh it
@@ -151,7 +157,7 @@ export const createUserAtom = runtime.fn(
 
 ```tsx
 // UsersList.tsx
-import * as AsyncResult from "effect/unstable/reactivity/AsyncResult"
+import { AsyncResult } from "effect/reactivity"
 import { useAtomRefresh, useAtomValue } from "@effect/atom-react"
 import { usersAtom } from "./users"
 
@@ -168,6 +174,7 @@ export function UsersList() {
         .onInitial(() => <p>Loading…</p>)
         .onErrorTag("HttpError", (e) => <p>Server returned {e.status}</p>)
         .onErrorTag("NetworkError", () => <p>Network unavailable</p>)
+        .onErrorTag("SchemaError", () => <p>Unexpected response shape</p>)
         .onDefect(() => <p>Unexpected error</p>)
         .onInterrupt(() => null)
         .onSuccess((users, r) => (
@@ -187,15 +194,16 @@ export function UsersList() {
 ```
 
 `.exhaustive()` only typechecks once every case (initial, each error tag,
-defects, interrupts, success) is handled. Use `.orNull()` when you don't need
-that guarantee.
+defects, interrupts, success) is handled. Drop the `SchemaError` handler and
+`.exhaustive()` stops compiling. Use `.orNull()` when you don't need that
+guarantee.
 
 ## 4. Parameterized fetch with `Atom.family`
 
 ```tsx
 // UserProfile.tsx
 import { Cause } from "effect"
-import * as AsyncResult from "effect/unstable/reactivity/AsyncResult"
+import { AsyncResult } from "effect/reactivity"
 import { useAtomRefresh, useAtomValue } from "@effect/atom-react"
 import { userAtom } from "./users"
 
@@ -231,7 +239,7 @@ import { useAtomSet, useAtomValue } from "@effect/atom-react"
 import { createUserAtom } from "./users"
 
 export function CreateUserButton() {
-  // mode: "promiseExit" returns Promise<Exit<User, HttpError | NetworkError>>
+  // mode: "promiseExit" returns Promise<Exit<User, HttpError | NetworkError | SchemaError>>
   const createUser = useAtomSet(createUserAtom, { mode: "promiseExit" })
   // the fn atom's own AsyncResult tracks the latest call
   const status = useAtomValue(createUserAtom)
@@ -254,22 +262,21 @@ export function CreateUserButton() {
 ```
 
 Because `createUserAtom` declares `reactivityKeys: ["users"]`, `usersAtom`
-(tagged with `Atom.withReactivity(["users"])`) refetches automatically after a
-successful call.
+(tagged with `Atom.withReactivity(["users"])`) refetches after a successful
+call.
 
 Setter modes:
 
-- default (`"value"`): `(arg) => void` — fire and forget.
-- `"promise"`: `(arg) => Promise<A>` — rejects on failure.
-- `"promiseExit"`: `(arg) => Promise<Exit<A, E>>` — never rejects.
+- default (`"value"`): `(arg) => void`, fire and forget.
+- `"promise"`: `(arg) => Promise<A>`, rejects on failure.
+- `"promiseExit"`: `(arg) => Promise<Exit<A, E>>`, never rejects.
 
-## 6. Infinite scroll / pagination with `Atom.pull`
+## 6. Infinite scroll and pagination with `Atom.pull`
 
 ```tsx
 // PageList.tsx
 import { Cause, Stream } from "effect"
-import * as AsyncResult from "effect/unstable/reactivity/AsyncResult"
-import * as Atom from "effect/unstable/reactivity/Atom"
+import { AsyncResult, Atom } from "effect/reactivity"
 import { useAtom } from "@effect/atom-react"
 
 // Pulls one chunk at a time; use runtime.pull when the stream needs services
@@ -300,8 +307,8 @@ export function PageList() {
 }
 ```
 
-Items accumulate across pulls by default; pass
-`{ disableAccumulation: true }` to keep only the latest chunk.
+Items accumulate across pulls by default. Pass `{ disableAccumulation: true }`
+to keep only the latest chunk.
 
 ## 7. Suspense
 

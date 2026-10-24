@@ -18,6 +18,6 @@ npx skills add axelgalea/skills --skill effect-atom-react
 
 | Skill | Description |
 | --- | --- |
-| [`effect-atom-react`](skills/effect-atom-react/SKILL.md) | Data fetching and async state in React with Effect v4 Atoms (`effect/unstable/reactivity`) and `@effect/atom-react`. |
+| [`effect-atom-react`](skills/effect-atom-react/SKILL.md) | Data fetching and async state in React with Effect v4 Atoms (`effect/reactivity`) and `@effect/atom-react`. |
 
 Created in [T3 Code](https://t3.codes).

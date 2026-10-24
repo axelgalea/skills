@@ -6,9 +6,9 @@ Use the package manager the project already uses. The lockfile in the project ro
 
 ## Stack
 
-- Effect v4 for application code.
+- Effect v4 for application code. Target the latest stable release of `effect` and its `@effect/*` packages. They share one version number, so upgrade them together.
 - `@effect/vitest` for tests.
-- Effect Atom for state in web apps. Atoms come from `effect/unstable/reactivity` and React hooks come from `@effect/atom-react`. Do not use the v3 packages `@effect-atom/atom` or `@effect-atom/atom-react`. Do not add another state library such as Redux, Zustand, Jotai, or TanStack Query.
+- Effect Atom for state in web apps. Atoms come from `effect/reactivity` and React hooks come from `@effect/atom-react`. Do not use the v3 packages `@effect-atom/atom` or `@effect-atom/atom-react`. Do not add another state library such as Redux, Zustand, Jotai, or TanStack Query.
 
 Effect v4 changed many APIs from v3, and most examples online and in model training data are v3. Check the source in `repos/effect` before you use an API you are not sure about.
 
@@ -17,7 +17,7 @@ Effect v4 changed many APIs from v3, and most examples online and in model train
 Keep shallow clones of the main external libraries in `repos/` at the project root. Search them with `rg` instead of guessing how a library works from memory.
 
 ```bash
-git clone --depth 1 https://github.com/Effect-TS/effect-smol repos/effect
+git clone --depth 1 https://github.com/Effect-TS/effect repos/effect
 git clone --depth 1 https://github.com/TanStack/router repos/tanstack-router
 
 rg "export const catchTag" repos/effect/packages/effect/src
