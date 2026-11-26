@@ -1,6 +1,6 @@
 ---
 name: effect
-description: Rules and patterns for TypeScript applications built on the latest Effect v4 release. Use when writing, editing, or reviewing code that imports `effect` or `@effect/*`, including services, layers, schemas, typed errors, config, tests with `@effect/vitest`, HTTP clients, RPC contracts and middleware, retry and polling, streams, caching, compiler setup, and React state with Effect Atom (`effect/reactivity`, `@effect/atom-react`).
+description: Rules and patterns for TypeScript applications built on the latest Effect v4 release. Use when writing, editing, or reviewing code that imports `effect` or `@effect/*`, including services, layers, schemas, SQL models with `Model` and `SqlModel`, typed errors, config, tests with `@effect/vitest`, HTTP clients, RPC contracts and middleware, retry and polling, streams, caching, compiler setup, and React state with Effect Atom (`effect/reactivity`, `@effect/atom-react`).
 ---
 
 # Effect
@@ -21,6 +21,7 @@ Read only the files that match the task. If a task spans several, read all of th
 | --- | --- |
 | Service modules, layers, runtime wiring, `Effect.fn`, background work | [references/services-layers.md](references/services-layers.md) |
 | Records, brands, variants, optional keys, decoding, typed errors | [references/schema-errors.md](references/schema-errors.md) |
+| SQL table rows with `Model.Class`, repositories, `SqlModel`, `SqlSchema` | [references/sql-models.md](references/sql-models.md) |
 | Env vars, `Config`, `ConfigProvider`, config-backed layers | [references/config.md](references/config.md) |
 | `@effect/vitest`, virtual time, fakes, test layers | [references/testing.md](references/testing.md) |
 | Dependencies, `tsconfig`, package compilation, Effect language service | [references/project-setup.md](references/project-setup.md) |
@@ -39,7 +40,8 @@ Read only the files that match the task. If a task spans several, read all of th
 - Wrap every public service method in `Effect.fn("UserRepo.get")`. An operation with no arguments is a plain Effect value named with `Effect.withSpan`, not a `() => Effect` function.
 - Fail with a tagged error by writing `return yield* new NotFound({ id })`.
 - Compose workflows with `Effect.gen(function* () { ... })`.
-- Model records with `Schema.Struct` plus a same-name `interface`. Do not use `Schema.Class`.
+- Define each SQL table row with `Model.Class` from `effect/schema`, and read and write it with `SqlModel` and `SqlSchema`.
+- Model other records with `Schema.Struct` plus a same-name `interface`. Do not use `Schema.Class`.
 - Define typed errors with `Schema.TaggedError`.
 - Decode unknown input with `Schema.decodeUnknownEffect`.
 - Read runtime config through `Config` in a layer, never `process.env` in application code.
