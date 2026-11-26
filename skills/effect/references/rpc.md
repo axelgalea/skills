@@ -124,8 +124,10 @@ authenticated identity.
 This is the repository's public contract. Implement `layer` with the chosen
 storage. Decode rows there, and map infrastructure failures there.
 
-Use `SqlSchema` or a schema decoder at the SQL boundary. Account for the
-database's representation, such as SQLite integers for boolean columns.
+With SQL storage, define the stored record as a `Model.Class` and put its
+`json`, `jsonCreate`, and `jsonUpdate` variants in the contract instead of a
+`Schema.Struct`. Read [sql-models.md](sql-models.md) for the model, the
+repository, and fields such as `Model.BooleanSqlite` for SQLite booleans.
 `SqliteClient.layer({ filename })` supplies both the SQLite and generic
 `SqlClient` services. A fresh `":memory:"` acquisition gives a test its own
 database. Run its migrations before testing queries.

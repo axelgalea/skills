@@ -2,15 +2,15 @@
 
 ## Package manager
 
-Use the package manager the project already uses. The lockfile in the project root tells you which one. If there is no lockfile, use nub.
+Use nub.
 
 ## Stack
 
 - Effect v4 for application code. Target the latest stable release of `effect` and its `@effect/*` packages. They share one version number, so upgrade them together.
 - `@effect/vitest` for tests.
-- Effect Atom for state in web apps. Atoms come from `effect/reactivity` and React hooks come from `@effect/atom-react`. Do not use the v3 packages `@effect-atom/atom` or `@effect-atom/atom-react`. Do not add another state library such as Redux, Zustand, Jotai, or TanStack Query.
+- Effect Atom for state in web apps. Atoms come from `effect/reactivity` and React hooks come from `@effect/atom-react`. Do not use the v3 packages `@effect-atom/atom` or `@effect-atom/atom-react`. Do not add another state library.
 
-Effect v4 changed many APIs from v3, and most examples online and in model training data are v3. Check the source in `repos/effect` before you use an API you are not sure about. For Effect code, use the `effect` skill.
+Check the source in `repos/effect` before you use an effect API you are not sure about. You can also use the `effect` skill.
 
 ## Library source in `repos/`
 
@@ -18,11 +18,8 @@ Keep shallow clones of the main external libraries in `repos/` at the project ro
 
 ```bash
 git clone --depth 1 https://github.com/Effect-TS/effect repos/effect
-git clone --depth 1 https://github.com/TanStack/router repos/tanstack-router
 
 rg "export const catchTag" repos/effect/packages/effect/src
-rg -l "createFileRoute" repos/tanstack-router/packages
-```
 
 - Add `repos/` to `.gitignore`.
 - Do not edit files in `repos/` or import from them.

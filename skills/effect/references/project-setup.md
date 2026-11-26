@@ -31,6 +31,22 @@ The setup command:
 
 Then run the package manager's install command. Run `npx @effect/tsgo setup --help` for editor flags such as `--vscode`.
 
+### Shared package stores
+
+`effect-tsgo patch` rewrites the TypeScript binary inside `node_modules`. nub, the pnpm global virtual store, Yarn PnP, and Nix link that binary from a store that other projects share. With nub, `patch` rewrites the copy under `~/.cache/nub`, so every project on that TypeScript version gets the patched binary.
+
+With one of these stores, do not patch. Remove the `prepare` script that setup added, and run the patched compiler that `@effect/tsgo` ships:
+
+```jsonc
+{
+  "scripts": {
+    "typecheck": "effect-tsgo tsc -p tsconfig.json"
+  }
+}
+```
+
+`effect-tsgo tsc` passes every argument to `tsc` and leaves `node_modules` unchanged. Point the editor's TypeScript server at `effect-tsgo tsc --lsp --stdio`. If you already patched a shared store, `effect-tsgo unpatch --typescript` restores the original binary.
+
 Use `effect-tsgo` as the only TypeScript language server in the editor. Running it next to plain `tsgo` duplicates every diagnostic.
 
 ### Rules to turn off

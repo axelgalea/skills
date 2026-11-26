@@ -4,7 +4,9 @@ Read this when you touch data models, wire contracts, brands, variants, optional
 
 ## Records
 
-Use `Schema.Struct` plus a same-name `interface`.
+A record stored in a SQL table is a `Model.Class` from `effect/schema`. Read
+[sql-models.md](sql-models.md) for those. Use `Schema.Struct` plus a same-name
+`interface` for every other record.
 
 ```ts
 export const User = Schema.Struct({
@@ -16,7 +18,7 @@ export const User = Schema.Struct({
 export interface User extends Schema.Schema.Type<typeof User> {}
 ```
 
-- Do not use `Schema.Class` or `Schema.TaggedClass` for new data models.
+- Do not use `Schema.Class` or `Schema.TaggedClass` for new data models. `Model.Class` for SQL rows is the one exception.
 - Add `.annotate({ identifier: "User" })` only when tooling reads it: HTTP API, RPC, OpenAPI, JSON Schema, or codegen.
 
 ## Construction versus decoding

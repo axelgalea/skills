@@ -192,4 +192,4 @@ Hooks use a default registry. Wrap the app in `<RegistryProvider>` for SSR, test
 
 ## Examples
 
-[atom-react-examples.md](atom-react-examples.md) has complete components for every pattern above. They typecheck against `effect@4.0.6` and pass `@effect/tsgo` with the settings in [project-setup.md](project-setup.md).
+[atom-react-examples.md](atom-react-examples.md) has complete components for every pattern above. They typecheck against `effect@4.1.5` and pass `@effect/tsgo` with the settings in [project-setup.md](project-setup.md).

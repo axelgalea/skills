@@ -1,7 +1,7 @@
 # Atom + React examples
 
 Every block below is a standalone module. All of them typecheck together against
-`effect@4.0.6` and `@effect/atom-react@4.0.6` under `strict` and
+`effect@4.1.5` and `@effect/atom-react@4.1.5` under `strict` and
 `exactOptionalPropertyTypes`, and pass `@effect/tsgo` with the settings in
 [project-setup.md](project-setup.md). The examples use
 `https://jsonplaceholder.typicode.com` as a stand-in API.

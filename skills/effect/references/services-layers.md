@@ -9,13 +9,16 @@ Each service gets its own file. The file exports fixed role names and ends by ex
 ```ts
 // user-repo.ts
 import { Context, Effect, Layer, Schema } from "effect"
+import { Model } from "effect/schema"
 import { SqlClient } from "effect/sql"
 
 export const UserId = Schema.String.pipe(Schema.brand("UserId"))
 export type UserId = typeof UserId.Type
 
-export const User = Schema.Struct({ id: UserId, name: Schema.String })
-export interface User extends Schema.Schema.Type<typeof User> {}
+export class User extends Model.Class<User>("User")({
+  id: Model.UuidV4Insert(UserId),
+  name: Schema.String,
+}) {}
 
 export class NotFound extends Schema.TaggedError<NotFound>()(
   "UserRepo.NotFound",
@@ -63,6 +66,7 @@ Rules:
 - Sibling modules import a namespace from the file that owns it, not through their own barrel.
 - Folder and package barrels re-export with `export { UserRepo } from "./user-repo.js"`.
 - Do not use TypeScript `namespace` declarations.
+- A repository backed by SQL defines its rows with `Model.Class`. See [sql-models.md](sql-models.md).
 - Export only the intended surface. Keep row codecs, local schemas, and helpers unexported.
 - Prefix error tags with the domain, such as `"UserRepo.NotFound"`, so tags stay unique across services.
 - The self-export makes `UserRepo.UserRepo === UserRepo`. This works in Vite, esbuild, `tsc`, and Node ESM.
