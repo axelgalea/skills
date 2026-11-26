@@ -5,7 +5,7 @@ description: Rules and patterns for TypeScript applications built on the latest 
 
 # Effect
 
-Verified against `effect@4.0.6`. Pin `effect` and its runtime and test
+Verified against `effect@4.1.5`. Pin `effect` and its runtime and test
 `@effect/*` packages to the same release. Compiler tooling such as `@effect/tsgo`
 has its own version. Check `repos/effect` when an API is not covered here.
 

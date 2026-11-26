@@ -19,7 +19,7 @@ import { TestClock } from "effect/testing"
 
 - Use `it.effect` by default. It provides `TestClock`, starts the clock at 0, and closes the test scope when the test ends.
 - Use `it.live` only when real time or live services are the behavior under test.
-- `it.effect` routes the console through `TestConsole`, so `Effect.log` output never prints, even with a logger layer provided. Use `it.live` when you need to see logs. Vitest 5.0.5 also hides console output from passing tests unless you run it with `--silent=false`.
+- `it.effect` routes the console through `TestConsole`, so `Effect.log` output never prints, even with a logger layer provided. Use `it.live` when you need to see logs. Vitest 5.1.1 also hides console output from passing tests unless you run it with `--silent=false`.
 - Use `it.effect.skip`, `it.effect.only`, and `it.effect.fails` as with plain vitest.
 - Provide a fresh layer inside each test with `Effect.provide(...)`, so state never leaks between tests.
 - Use `it.layer(layer)("suite", (it) => { ... })` only for a costly shared resource such as a database. All tests in the suite share its state.

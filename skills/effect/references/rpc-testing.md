@@ -98,7 +98,7 @@ the same real handlers and repository with the chosen test identity. Keep the
 normal fixed-port listener out of this graph. The test HTTP client already
 prepends its server origin. Use an empty RPC URL and append `/rpc` after that
 transformation. Passing `/rpc` as the RPC URL would prepend it to the absolute
-test URL in Effect 4.0.6. NDJSON needs the same serializer at both ends.
+test URL in Effect 4.1.5. NDJSON needs the same serializer at both ends.
 In-memory RPC tests alone cannot catch encoding mistakes.
 
 ## Web atoms

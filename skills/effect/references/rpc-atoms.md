@@ -95,7 +95,7 @@ export function TodoList() {
 The query payload is the procedure payload. The mutation setter takes an
 invocation object with a `payload` field. Its `reactivityKeys` invalidate
 queries with matching keys in the same atom runtime. This is local client
-invalidation, not a notification to other browsers. In Effect 4.0.6,
+invalidation, not a notification to other browsers. In Effect 4.1.5,
 `Reactivity.mutation` invalidates keys after success. A failed mutation does not
 invalidate them.
 
